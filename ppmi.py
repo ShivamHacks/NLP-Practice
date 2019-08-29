@@ -14,6 +14,15 @@ PMI(X,Y) = log2 --------
 These values range from -inf to inf, however we do not want negative similarity, so we will
 clip values at 0: PPMI(X,Y) = max(0, PMI(X,Y))
 
+Problem with PPMI: It is biased towards infrequent events. Infrequent events will have
+low probability, and these values are in the denomintator of the fraction, so they will
+result in high values for PMI.
+
+Two solutions:
+1) weighting: reduce the context probability by some multiplier
+2) k-smoothing: add k to all counts so rare events have higher probabilities
+
+
 """
 
 import math
@@ -23,10 +32,16 @@ import pandas as pd
 """
 table: term-term table stored as a pandas Dataframe object
 """
-def ppmi(table):
+def ppmi(table, weight=1, smoothing=0):
+
+	# TODO: add weighting
 	
 	words = list(table.columns)
 	contexts = list(table.index.values)
+
+	if smoothing != 0:
+		table = table.copy()
+		table = table + smoothing
 
 	n = table.values.sum()
 
@@ -41,7 +56,7 @@ def ppmi(table):
 			p_x = table[x].sum() / n
 			p_y = table.loc[y].sum() / n
 
-			# Note: log2(x) < 0 == x < 1
+			# Note: log2(t) < 0 == t < 1
 			pmi_pre_log = p_xy / (p_x * p_y)
 			if pmi_pre_log < 1:
 				ppmi_table[x][y] = 0
@@ -73,4 +88,15 @@ if __name__ == '__main__':
 
 	assert(expected.equals(ppmi_table.round(2)))
 
+	ppmi_table = ppmi(table, smoothing=2)
+	print(ppmi_table.round(2))
+
+	expected_smoothing = pd.DataFrame({
+		'apricot':     { 'computer': 0,    'data': 0,    'pinch': 0.56, 'result': 0,    'sugar': 0.56 },
+		'pineapple':   { 'computer': 0,    'data': 0,    'pinch': 0.56, 'result': 0,    'sugar': 0.56 },
+		'digital':     { 'computer': 0.62, 'data': 0,    'pinch': 0,    'result': 0,    'sugar': 0    },
+		'information': { 'computer': 0,    'data': 0.58, 'pinch': 0,    'result': 0.37, 'sugar': 0    }
+	})
+
+	assert(expected_smoothing.equals(ppmi_table.round(2)))
 
