@@ -30,7 +30,7 @@ def read_from_txt(file):
 		return Document(text)
 
 
-# test
+# tests
 if __name__ == '__main__':
 	
 	# simple example

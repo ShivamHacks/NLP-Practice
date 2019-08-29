@@ -21,6 +21,7 @@ class TermDoc:
 		# NaN means that the term does not occur in the document.
 		self.table.fillna(0, inplace=True)
 
+# tests
 if __name__ == '__main__':
 
 	doc1 = document.Document("Hello World")
